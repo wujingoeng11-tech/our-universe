@@ -10,7 +10,8 @@
   const SHARE_HASH_KEY = "universe";
   const SHARE_ITERATIONS = 180000;
   const SHARE_PHOTO_LIMIT = 6;
-  const SHARE_MAX_BYTES = 1250000;
+  const SHARE_MAX_BYTES = 900000;
+  const PASTE_API_BASE = "https://api.pastes.dev";
 
   const $ = (selector, scope = document) => scope.querySelector(selector);
   const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)];
@@ -211,6 +212,36 @@
       encrypted,
     );
     return JSON.parse(new TextDecoder().decode(decrypted));
+  }
+
+  async function uploadEncryptedShare(token) {
+    const response = await fetch(`${PASTE_API_BASE}/post`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain",
+        Accept: "application/json",
+      },
+      body: token,
+    });
+    if (!response.ok) {
+      throw new Error(`Short link service returned ${response.status}.`);
+    }
+    const result = await response.json();
+    if (!result.key) {
+      throw new Error("Short link service did not return a key.");
+    }
+    return result.key;
+  }
+
+  async function downloadEncryptedShare(key) {
+    if (!/^[A-Za-z0-9]+$/.test(key)) {
+      throw new Error("专属链接编号不正确。");
+    }
+    const response = await fetch(`${PASTE_API_BASE}/${key}`);
+    if (!response.ok) {
+      throw new Error("短链接对应的内容暂时无法读取，请稍后再试。");
+    }
+    return (await response.text()).trim();
   }
 
   function getShareToken() {
@@ -424,37 +455,52 @@
       applySettings(nextSettings);
       saveSettings();
 
-      const sharePhotos = $("#includePhotosInput").checked
+      let sharePhotos = $("#includePhotosInput").checked
         ? await prepareSharePhotos()
         : [];
-      const payload = {
-        v: 1,
-        createdAt: new Date().toISOString(),
-        settings: {
-          myName: settings.myName,
-          herName: settings.herName,
-          startDate: settings.startDate,
-          nextDate: settings.nextDate,
-          nextTitle: settings.nextTitle,
-          heroIntro: settings.heroIntro,
-          letterBody: settings.letterBody,
-        },
-        photos: sharePhotos,
+      const shareSettings = {
+        myName: settings.myName,
+        herName: settings.herName,
+        startDate: settings.startDate,
+        nextDate: settings.nextDate,
+        nextTitle: settings.nextTitle,
+        heroIntro: settings.heroIntro,
+        letterBody: settings.letterBody,
       };
-      const token = await encryptSharePayload(payload, accessPassword);
-      const shareUrl = new URL(location.href);
-      shareUrl.hash = `${SHARE_HASH_KEY}=${token}`;
+      let pasteKey = "";
 
-      if (shareUrl.href.length > 1800000) {
-        throw new Error("照片让链接太长了，请取消勾选照片后重试。");
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        const payload = {
+          v: 1,
+          createdAt: new Date().toISOString(),
+          settings: shareSettings,
+          photos: sharePhotos,
+        };
+        const token = await encryptSharePayload(payload, accessPassword);
+        try {
+          pasteKey = await uploadEncryptedShare(token);
+          break;
+        } catch {
+          if (!sharePhotos.length) {
+            throw new Error("短链接服务暂时不可用，请稍后再试。");
+          }
+          sharePhotos = sharePhotos.slice(0, Math.floor(sharePhotos.length / 2));
+        }
       }
+
+      if (!pasteKey) {
+        throw new Error("照片数量过多，暂时无法生成短链接。");
+      }
+
+      const shareUrl = new URL(location.href);
+      shareUrl.hash = `${SHARE_HASH_KEY}=paste:${pasteKey}`;
 
       output.value = shareUrl.href;
       resultBox.hidden = false;
       const copied = await copyText(shareUrl.href);
       showToast(
         copied
-          ? `专属链接已复制，包含 ${sharePhotos.length} 张照片`
+          ? `短链接已复制，包含 ${sharePhotos.length} 张照片`
           : "专属链接已生成，请在下方手动复制",
       );
     } catch (error) {
@@ -500,8 +546,12 @@
         }
 
         accessPassword = password;
-        const shareToken = getShareToken();
+        let shareToken = getShareToken();
         if (shareToken) {
+          if (shareToken.startsWith("paste:")) {
+            error.textContent = "正在从银河里取回她收到的内容…";
+            shareToken = await downloadEncryptedShare(shareToken.slice(6));
+          }
           let payload;
           try {
             payload = await decryptSharePayload(shareToken, password);
