@@ -1,0 +1,96 @@
+/* Our Universe · Dreamy Kawaii Stardust Theme
+   Add this file after styles.css in index.html.
+   CSS-only enhancement: original HTML and app.js interactions remain untouched. */
+
+:root {
+  --ink: #17152d;
+  --ink-soft: #211d3b;
+  --ink-blue: #2c244b;
+  --paper: #fff4f8;
+  --paper-soft: #f6dfe9;
+  --text: #fff8fc;
+  --muted: #c8bddb;
+  --muted-dark: #77647d;
+  --rose: #ffb7d5;
+  --rose-bright: #ffd2e7;
+  --rose-deep: #e58ab8;
+  --gold: #ffe2a8;
+  --violet: #c6b4ff;
+  --violet-deep: #8571c5;
+  --line: rgba(255, 220, 241, .19);
+  --line-dark: rgba(65, 43, 88, .14);
+}
+
+html {
+  scrollbar-color: #e99bc7 #17152d;
+  scroll-behavior: smooth;
+}
+
+body {
+  background:
+    radial-gradient(ellipse at 12% 12%, rgba(180, 139, 255, .13), transparent 35%),
+    radial-gradient(ellipse at 88% 38%, rgba(255, 151, 202, .11), transparent 32%),
+    #17152d;
+}
+
+::selection { color: #241a3c; background: #ffc7e2; }
+
+#starfield { opacity: .88; }
+
+.access-gate {
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255, 171, 211, .2), transparent 28%),
+    radial-gradient(circle at 20% 85%, rgba(163, 143, 255, .16), transparent 32%),
+    #17152d;
+}
+.access-gate::before {
+  opacity: .45;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 0 120px, rgba(255, 211, 235, .06) 121px 122px, transparent 123px 205px, rgba(255, 211, 235, .045) 206px 207px, transparent 208px),
+    linear-gradient(90deg, transparent 49.93%, rgba(255, 211, 235, .05) 50%, transparent 50.07%),
+    linear-gradient(transparent 49.93%, rgba(255, 211, 235, .05) 50%, transparent 50.07%);
+}
+.gate-planet {
+  opacity: .62;
+  background:
+    radial-gradient(circle at 36% 30%, rgba(255, 236, 220, .75), transparent 2.5%),
+    radial-gradient(circle at 50% 50%, rgba(255, 164, 211, .36), rgba(150, 122, 222, .22) 45%, transparent 70%);
+  filter: blur(1px);
+}
+.gate-planet::before, .gate-planet::after {
+  border-color: rgba(255, 222, 241, .24);
+}
+.gate-card {
+  border: 1px solid rgba(255, 211, 235, .28);
+  border-radius: 30px;
+  background: linear-gradient(145deg, rgba(49, 37, 75, .95), rgba(25, 23, 49, .97));
+  box-shadow: 0 35px 110px rgba(4, 3, 20, .45), 0 0 70px rgba(255, 169, 215, .1), inset 0 1px 0 rgba(255,255,255,.1);
+  backdrop-filter: blur(18px);
+}
+.gate-card::before, .gate-card::after {
+  width: 24px; height: 24px; border-color: rgba(255, 210, 231, .56);
+}
+.gate-mark {
+  border-color: rgba(255, 189, 220, .58);
+  background: rgba(255, 192, 222, .08);
+  box-shadow: 0 0 30px rgba(255, 166, 212, .13);
+  animation: kawaii-float 4.5s ease-in-out infinite;
+}
+.gate-card h1 { color: #fff0f8; letter-spacing: .01em; }
+.gate-kicker { color: #ffc2e0; }
+.gate-input-wrap {
+  overflow: hidden; border-radius: 15px;
+  background: rgba(255,255,255,.045);
+}
+.gate-input-wrap button {
+  background: linear-gradient(135deg, #ffd8eb, #cbbdff);
+  color: #342344;
+}
+.gate-footer { color: #b6a9ce; }
+.gate-orbit { border-color: rgba(255, 201, 232, .09); }
+
+.site-header.is-scrolled {
+  background: rgba(23, 21, 45, .78);
+  border-bottom-color: rgba(255, 202, 231, .14);
+  box-shadow: 0 8px 30px rgba(8, 4, 25, .08);
+}
