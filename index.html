@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="一个只属于我们的浪漫小宇宙：恋爱时间、照片星轨与藏在银河里的心事。"
+    />
+    <meta name="theme-color" content="#070a18" />
+    <title>我们的宇宙 · Our Universe</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+    <canvas id="starfield" aria-hidden="true"></canvas>
+
+    <div class="loader" id="loader" aria-live="polite">
+      <div class="loader-orbit">
+        <span></span>
+        <i></i>
+      </div>
+      <p>正在把宇宙调成你喜欢的亮度</p>
+    </div>
+
+    <div class="cursor cursor-dot" id="cursorDot" aria-hidden="true"></div>
+    <div class="cursor cursor-ring" id="cursorRing" aria-hidden="true"></div>
+
+    <header class="site-header" id="siteHeader">
+      <a class="brand" href="#home" aria-label="回到首页">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 48 48" role="img">
+            <path d="M24 9v30M9 24h30" />
+            <circle cx="24" cy="24" r="5.2" />
+            <path d="M24 3.5v5M24 39.5v5M3.5 24h5M39.5 24h5" />
+          </svg>
+        </span>
+        <span class="brand-copy">
+          <small>OUR UNIVERSE</small>
+          <strong data-bind="pairLabel">她 × 我</strong>
+        </span>
+      </a>
+
+      <nav class="desktop-nav" aria-label="主导航">
+        <a href="#time">恋爱纪元</a>
+        <a href="#gallery">照片星轨</a>
+        <a href="#game">银河游乐园</a>
+        <a href="#letter">写给她</a>
+      </nav>
+
+      <button class="settings-trigger" type="button" data-open-settings>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" />
+          <circle cx="12" cy="12" r="4" />
+        </svg>
+        <span>定制宇宙</span>
+      </button>
+
+      <button class="menu-trigger" id="menuTrigger" type="button" aria-label="打开菜单" aria-expanded="false">
+        <span></span>
+        <span></span>
+      </button>
+    </header>
+
+    <nav class="mobile-nav" id="mobileNav" aria-label="移动端导航">
+      <a href="#time"><span>01</span> 恋爱纪元</a>
+      <a href="#gallery"><span>02</span> 照片星轨</a>
+      <a href="#game"><span>03</span> 银河游乐园</a>
+      <a href="#letter"><span>04</span> 写给她</a>
+      <button type="button" data-open-settings>定制我们的宇宙</button>
+    </nav>
+
+    <main>
+      <section class="hero" id="home">
+        <div class="hero-glow" aria-hidden="true"></div>
+        <div class="hero-copy reveal">
+          <div class="eyebrow">
+            <span class="eyebrow-line"></span>
+            <span>A LITTLE UNIVERSE, ONLY FOR US</span>
+          </div>
+          <h1>
+            在我小小的宇宙里<br />
+            你是我的<em>引力中心</em>
+          </h1>
+          <p class="hero-intro" data-bind="heroIntro">
+            星星负责浪漫，银河负责辽阔，而我负责一直、一直偏爱你。
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#time">
+              <span>坠入我们的星系</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </a>
+            <button class="button button-quiet" type="button" data-open-settings>
+              把这颗星球改成我们
+            </button>
+          </div>
+        </div>
+
+        <div class="hero-visual reveal" aria-label="属于我们的行星轨道">
+          <div class="orbit-system" id="orbitSystem">
+            <div class="orbit-caption orbit-caption-top">
+              <span>LOVE</span>
+              <i></i>
+            </div>
+            <div class="orbit orbit-one">
+              <span class="orbit-planet planet-moon"></span>
+            </div>
+            <div class="orbit orbit-two">
+              <span class="orbit-planet planet-ring"></span>
+            </div>
+            <div class="orbit orbit-three">
+              <span class="orbit-planet planet-spark"></span>
+            </div>
+            <div class="planet-core">
+              <div class="planet-shine"></div>
+              <span class="planet-initials" data-bind="initials">她 × 我</span>
+              <small>YOU ARE<br />MY UNIVERSE</small>
+            </div>
+            <span class="floating-note note-a">永远<br />心动</span>
+            <span class="floating-note note-b">∞</span>
+            <div class="orbit-caption orbit-caption-bottom">
+              <span>SINCE THE DAY WE MET</span>
+              <i></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-footer reveal">
+          <div class="coordinate">
+            <span>爱意坐标</span>
+            <strong>∞° N · ∞° E</strong>
+          </div>
+          <a class="scroll-hint" href="#time" aria-label="向下滚动">
+            <span>向下探索</span>
+            <i></i>
+          </a>
+          <div class="hero-stamp" aria-hidden="true">
+            <svg viewBox="0 0 90 90">
+              <defs>
+                <path id="stampCircle" d="M45,45 m-31,0 a31,31 0 1,1 62,0 a31,31 0 1,1 -62,0" />
+              </defs>
+              <text>
+                <textPath href="#stampCircle">
+                  MADE OF STARDUST · MADE FOR YOU ·
+                </textPath>
+              </text>
+              <path d="M45 28c5 7 12 8 12 16 0 7-5 12-12 15-7-3-12-8-12-15 0-8 7-9 12-16Z" />
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-marquee" aria-hidden="true">
+        <div>
+          <span>MY FAVORITE PLACE IS NEXT TO YOU</span>
+          <i>✦</i>
+          <span>你是我所有浪漫的出发点</span>
+          <i>✦</i>
+          <span>MY FAVORITE PLACE IS NEXT TO YOU</span>
+          <i>✦</i>
+          <span>你是我所有浪漫的出发点</span>
+          <i>✦</i>
+        </div>
+      </div>
+
+      <section class="time-section section" id="time">
+        <div class="section-heading reveal">
+          <div>
+            <span class="section-index">01 / LOVE CHRONICLE</span>
+            <h2>恋爱纪元</h2>
+          </div>
+          <p>
+            从宇宙大爆炸到人类文明，<br />
+            都不如我们相遇那天的万分之一个瞬间。
+          </p>
+        </div>
+
+        <div class="time-grid">
+          <article class="days-card glass-panel reveal">
+            <div class="card-kicker">
+              <span>TOGETHER FOR</span>
+              <span class="live-dot">LIVE</span>
+            </div>
+            <div class="days-count">
+              <span data-bind="daysTogether">0000</span>
+              <small>天</small>
+            </div>
+            <p>
+              我们已经一起看过了
+              <strong data-bind="moons">0</strong>
+              次月升月落
+            </p>
+            <div class="tiny-stars" aria-hidden="true">
+              <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+            </div>
+            <div class="anniversary-orbit" aria-hidden="true">
+              <span></span>
+              <i></i>
+            </div>
+          </article>
+
+          <article class="countdown-card glass-panel reveal">
+            <div class="card-kicker">
+              <span data-bind="nextEventLabel">NEXT DATE · 下一次约定</span>
+              <span data-bind="nextEventTitle">见面</span>
+            </div>
+            <div class="countdown" aria-live="polite">
+              <div>
+                <strong data-bind="countdownDays">00</strong>
+                <span>天</span>
+              </div>
+              <b>:</b>
+              <div>
+                <strong data-bind="countdownHours">00</strong>
+                <span>时</span>
+              </div>
+              <b>:</b>
+              <div>
+                <strong data-bind="countdownMinutes">00</strong>
+                <span>分</span>
+              </div>
+              <b>:</b>
+              <div>
+                <strong data-bind="countdownSeconds">00</strong>
+                <span>秒</span>
+              </div>
+            </div>
+            <div class="countdown-footer">
+              <span>
+                <i></i>
+                时间正在把我们推向下一次相见
+              </span>
+              <button type="button" class="text-button" data-open-settings>
+                修改日期
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+              </button>
+            </div>
+          </article>
+
+          <article class="moment-card glass-panel reveal">
+            <div class="moment-icon">
+              <svg viewBox="0 0 52 52" aria-hidden="true">
+                <path d="M26 44S8 33.4 8 19.7C8 12.7 13.2 8 19.5 8c3 0 5.3 1.5 6.5 3.6C27.2 9.5 29.5 8 32.5 8 38.8 8 44 12.7 44 19.7 44 33.4 26 44 26 44Z" />
+                <path d="M26 15v18M20 21h12" />
+              </svg>
+            </div>
+            <div>
+              <span>DAILY AFFIRMATION</span>
+              <p id="dailyAffirmation">今天也比昨天，多喜欢你一点点。</p>
+            </div>
+            <button class="affirmation-button" type="button" id="newAffirmation" aria-label="换一句心动签">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20 11a8 8 0 1 0-2.3 6M20 4v7h-7" />
+              </svg>
+            </button>
+          </article>
+        </div>
+      </section>
+
+      <section class="gallery-section section" id="gallery">
+        <div class="section-heading reveal">
+          <div>
+            <span class="section-index">02 / MEMORY CONSTELLATION</span>
+            <h2>照片星轨</h2>
+          </div>
+          <p>
+            每一次按下快门，<br />
+            都是在浩瀚宇宙里收藏一颗只属于我们的星。
+          </p>
+        </div>
+
+        <div class="gallery-toolbar reveal">
+          <p><span id="photoCount">0</span> 颗记忆正在我们的星系发光</p>
+          <div class="gallery-actions">
+            <button class="button button-small button-quiet" type="button" id="samplePhotosButton">
+              看看星座位置
+            </button>
+            <button class="button button-small button-primary" type="button" id="addPhotoButton">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              放进一颗记忆
+            </button>
+          </div>
+          <input id="photoInput" type="file" accept="image/*" multiple hidden />
+        </div>
+
+        <div class="photo-wall reveal" id="photoWall" aria-label="我们的照片墙">
+          <div class="drop-cue" id="dropCue" aria-live="polite">
+            <div class="drop-cue-heart">
+              <svg viewBox="0 0 64 64" aria-hidden="true">
+                <path d="M32 54S10 41 10 24.8C10 16.5 16.1 11 23.4 11c3.6 0 6.5 1.7 8.6 4.6 2.1-2.9 5-4.6 8.6-4.6C47.9 11 54 16.5 54 24.8 54 41 32 54 32 54Z" />
+                <path d="M32 23v16M24 31h16" />
+              </svg>
+            </div>
+            <strong>把我们的照片拖到这里</strong>
+            <span>支持多选，只保存在这台设备上</span>
+          </div>
+        </div>
+
+        <div class="gallery-note reveal">
+          <svg viewBox="0 0 30 30" aria-hidden="true">
+            <path d="M15 3v24M3 15h24" />
+          </svg>
+          <p>
+            “后来才发现，照片里最动人的从来不是风景，<br />
+            而是每一次我看向你时，你都刚好在笑。”
+          </p>
+        </div>
+      </section>
+
+      <section class="game-section" id="game">
+        <div class="game-inner section">
+          <div class="game-copy reveal">
+            <span class="section-index">03 / INTERSTELLAR PLAYGROUND</span>
+            <h2>银河游乐园</h2>
+            <p>
+              听说，只要收集足够多的心动，<br />
+              就能点亮一整片只属于我们的星空。
+            </p>
+            <div class="game-stats">
+              <div>
+                <span>本次心动</span>
+                <strong><span id="gameScore">0</span> <i>/ 12</i></strong>
+              </div>
+              <div>
+                <span>最高纪录</span>
+                <strong id="gameBest">0</strong>
+              </div>
+              <div>
+                <span>剩余时间</span>
+                <strong><span id="gameTime">30</span><i>s</i></strong>
+              </div>
+            </div>
+            <button class="button button-primary game-start" type="button" id="gameStart">
+              <span>开始收集心动</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            </button>
+            <small class="game-hint">点击或轻触漂浮的爱心与星星 · 爱心值 +2</small>
+          </div>
+
+          <div class="game-stage reveal">
+            <canvas id="loveGame" width="760" height="600" aria-label="收集心动小游戏"></canvas>
+            <div class="game-overlay" id="gameOverlay">
+              <div class="game-overlay-star" aria-hidden="true">
+                <svg viewBox="0 0 80 80">
+                  <path d="m40 8 7.8 22.7 24 1.2-19.2 13.8 6.8 22.8L40 53.8 20.6 68.5l6.8-22.8L8.2 31.9l24-1.2L40 8Z" />
+                </svg>
+              </div>
+              <strong id="overlayTitle">今晚的银河<br />等我们点亮</strong>
+              <span id="overlayText">准备好了吗？</span>
+              <button class="text-button" type="button" id="overlayButton">开始游戏</button>
+            </div>
+            <div class="game-frame-label">LOVE PARTICLES · 收集器</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="letter-section section" id="letter">
+        <div class="letter-side reveal">
+          <span class="section-index">04 / A LETTER TO YOU</span>
+          <h2>写给她</h2>
+          <p>
+            有些话适合当着全宇宙的面说，<br />
+            有些话，只想悄悄放进这一封信里。
+          </p>
+          <div class="letter-orbit" aria-hidden="true">
+            <span></span>
+            <i></i>
+            <b>♡</b>
+          </div>
+          <button class="button button-quiet" type="button" data-open-settings>
+            改写这封信
+          </button>
+        </div>
+
+        <article class="letter-card reveal" id="letterCard">
+          <div class="letter-top">
+            <span>TO MY FAVORITE PERSON</span>
+            <span data-bind="todayDate">2026 / 10 / 26</span>
+          </div>
+          <div class="letter-paper">
+            <p class="salutation" data-bind="letterTo">亲爱的你：</p>
+            <div class="letter-body" data-bind="letterBody">
+              我想把世界上所有美好的词都送给你，可后来发现，“你”这个字本身，就已经胜过万语千言。
+              <br /><br />
+              谢谢你愿意走进我的生活，让那些原本普通的日子，有了值得纪念的意义。未来的路还很长，我想陪你看日出、看晚霞、看星星，也陪你度过每一个不必发光的日子。
+              <br /><br />
+              宇宙很大，而我最确定的事，是站在你身边。
+            </div>
+            <div class="letter-sign">
+              <span>永远偏爱你的</span>
+              <strong data-bind="letterFrom">我</strong>
+            </div>
+            <div class="letter-seal" aria-hidden="true">
+              <span>LOVE</span>
+              <i>♡</i>
+              <span>INFINITY</span>
+            </div>
+          </div>
+          <div class="letter-bottom">
+            <span>SEALED WITH A KISS</span>
+            <button type="button" id="replayLetter">
+              再读一遍
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20 11a8 8 0 1 0-2.3 6M20 4v7h-7" />
+              </svg>
+            </button>
+          </div>
+        </article>
+      </section>
+
+      <section class="finale reveal">
+        <div class="finale-rings" aria-hidden="true">
+          <i></i><i></i><i></i>
+        </div>
+        <span>THE UNIVERSE IS BIG, BUT MY WORLD IS YOU</span>
+        <h2>
+          宇宙很大<br />
+          <em>还好我们有彼此</em>
+        </h2>
+        <p>这不是一个完成的故事，这只是我们漫长相爱的序章。</p>
+        <a class="finale-heart" href="#home" aria-label="回到宇宙起点">
+          <svg viewBox="0 0 38 38" aria-hidden="true">
+            <path d="M19 33S5 24.5 5 15.3C5 10.1 8.8 7 13 7c2.4 0 4.4 1.2 6 3.2C20.6 8.2 22.6 7 25 7c4.2 0 8 3.1 8 8.3C33 24.5 19 33 19 33Z" />
+          </svg>
+        </a>
+      </section>
+    </main>
+
+    <footer>
+      <div class="footer-brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 48 48">
+            <path d="M24 9v30M9 24h30" />
+            <circle cx="24" cy="24" r="5.2" />
+            <path d="M24 3.5v5M24 39.5v5M3.5 24h5M39.5 24h5" />
+          </svg>
+        </span>
+        <div>
+          <strong data-bind="pairLabel">她 × 我</strong>
+          <span>OUR PRIVATE UNIVERSE</span>
+        </div>
+      </div>
+      <p>用星尘、偏爱和每一个平凡的日子构成</p>
+      <span>MADE WITH LOVE · <b id="footerYear">2026</b></span>
+    </footer>
+
+    <dialog class="settings-dialog" id="settingsDialog">
+      <form class="settings-panel" id="settingsForm" method="dialog">
+        <div class="settings-head">
+          <div>
+            <span>PERSONALIZE OUR UNIVERSE</span>
+            <h2>定制我们的宇宙</h2>
+          </div>
+          <button type="button" class="dialog-close" id="dialogClose" aria-label="关闭设置">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m6 6 12 12M18 6 6 18" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="settings-scroll">
+          <p class="settings-intro">
+            这些内容只会保存在当前浏览器里。填好之后，这就是只属于你们的版本。
+          </p>
+
+          <div class="field-row">
+            <label class="field">
+              <span>我的名字</span>
+              <input id="myNameInput" name="myName" maxlength="12" placeholder="比如：阿辰" />
+            </label>
+            <label class="field">
+              <span>她的名字</span>
+              <input id="herNameInput" name="herName" maxlength="12" placeholder="比如：小满" />
+            </label>
+          </div>
+
+          <div class="field-row">
+            <label class="field">
+              <span>恋爱开始日期</span>
+              <input id="startDateInput" name="startDate" type="date" />
+            </label>
+            <label class="field">
+              <span>下一次约定日期</span>
+              <input id="nextDateInput" name="nextDate" type="datetime-local" />
+            </label>
+          </div>
+
+          <label class="field">
+            <span>下一次约定</span>
+            <input id="nextTitleInput" name="nextTitle" maxlength="20" placeholder="比如：一起去海边" />
+          </label>
+
+          <label class="field">
+            <span>首屏写给她的话</span>
+            <textarea id="heroIntroInput" name="heroIntro" maxlength="100" rows="3"></textarea>
+          </label>
+
+          <label class="field">
+            <span>写给她的信</span>
+            <textarea id="letterInput" name="letterBody" maxlength="600" rows="8"></textarea>
+            <small>换行会保留在信件里</small>
+          </label>
+        </div>
+
+        <div class="settings-foot">
+          <button class="button button-quiet" type="button" id="resetSettings">恢复默认</button>
+          <button class="button button-primary" type="submit">
+            保存，让宇宙更像我们
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="查看照片" hidden>
+      <button class="lightbox-close" id="lightboxClose" type="button" aria-label="关闭照片">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+      </button>
+      <div class="lightbox-frame">
+        <img id="lightboxImage" alt="" />
+        <div class="lightbox-meta">
+          <div>
+            <span id="lightboxCaption">我们的记忆</span>
+            <small id="lightboxDate"></small>
+          </div>
+          <button type="button" id="deletePhoto">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5" />
+            </svg>
+            删除这张
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite">
+      <span>♡</span>
+      <p>已经收进我们的宇宙</p>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
