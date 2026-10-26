@@ -6,6 +6,11 @@
   const PHOTO_DB_NAME = "our-universe-photos";
   const PHOTO_STORE = "memories";
   const MAX_PHOTOS = 30;
+  const ACCESS_HASH = "52d2e018eb38625729637ff39082f74cc424a934e5cfde75b2993d884c94f649";
+  const SHARE_HASH_KEY = "universe";
+  const SHARE_ITERATIONS = 180000;
+  const SHARE_PHOTO_LIMIT = 6;
+  const SHARE_MAX_BYTES = 1250000;
 
   const $ = (selector, scope = document) => scope.querySelector(selector);
   const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)];
@@ -82,6 +87,8 @@
   let previewPlaceholders = false;
   let currentPhotoId = null;
   let toastTimer = null;
+  let accessPassword = "";
+  let activeSharePayload = null;
 
   function cleanName(name, fallback) {
     const clean = String(name || "").trim();
@@ -113,6 +120,181 @@
   function safeDate(value, fallback) {
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? fallback : date;
+  }
+
+  function bytesToBase64Url(bytes) {
+    let binary = "";
+    const chunkSize = 0x8000;
+    for (let index = 0; index < bytes.length; index += chunkSize) {
+      binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
+    }
+    return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
+  }
+
+  function base64UrlToBytes(value) {
+    const base64 = value.replaceAll("-", "+").replaceAll("_", "/");
+    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+    const binary = atob(padded);
+    return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  }
+
+  async function sha256Hex(value) {
+    if (!window.crypto?.subtle) {
+      return value === "our-universe:191029" ? ACCESS_HASH : "";
+    }
+    const digest = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(value),
+    );
+    return [...new Uint8Array(digest)]
+      .map((byte) => byte.toString(16).padStart(2, "0"))
+      .join("");
+  }
+
+  async function deriveShareKey(password, salt) {
+    if (!window.crypto?.subtle) {
+      throw new Error("当前浏览器不支持加密分享，请使用新版浏览器。");
+    }
+    const sourceKey = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(password),
+      "PBKDF2",
+      false,
+      ["deriveKey"],
+    );
+    return crypto.subtle.deriveKey(
+      {
+        name: "PBKDF2",
+        salt,
+        iterations: SHARE_ITERATIONS,
+        hash: "SHA-256",
+      },
+      sourceKey,
+      { name: "AES-GCM", length: 256 },
+      false,
+      ["encrypt", "decrypt"],
+    );
+  }
+
+  async function encryptSharePayload(payload, password) {
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await deriveShareKey(password, salt);
+    const encrypted = await crypto.subtle.encrypt(
+      { name: "AES-GCM", iv },
+      key,
+      new TextEncoder().encode(JSON.stringify(payload)),
+    );
+    const wrapper = {
+      v: 1,
+      salt: bytesToBase64Url(salt),
+      iv: bytesToBase64Url(iv),
+      data: bytesToBase64Url(new Uint8Array(encrypted)),
+    };
+    return bytesToBase64Url(new TextEncoder().encode(JSON.stringify(wrapper)));
+  }
+
+  async function decryptSharePayload(token, password) {
+    const wrapper = JSON.parse(
+      new TextDecoder().decode(base64UrlToBytes(token)),
+    );
+    if (wrapper.v !== 1 || !wrapper.salt || !wrapper.iv || !wrapper.data) {
+      throw new Error("分享链接格式不正确。");
+    }
+    const salt = base64UrlToBytes(wrapper.salt);
+    const iv = base64UrlToBytes(wrapper.iv);
+    const encrypted = base64UrlToBytes(wrapper.data);
+    const key = await deriveShareKey(password, salt);
+    const decrypted = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv },
+      key,
+      encrypted,
+    );
+    return JSON.parse(new TextDecoder().decode(decrypted));
+  }
+
+  function getShareToken() {
+    const parameters = new URLSearchParams(location.hash.replace(/^#/, ""));
+    return parameters.get(SHARE_HASH_KEY);
+  }
+
+  function loadImageSource(source) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("Could not load image"));
+      image.src = source;
+    });
+  }
+
+  async function compressPhotoForShare(source, maxSide = 850, quality = 0.62) {
+    const image = await loadImageSource(source);
+    const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(image.width * scale));
+    canvas.height = Math.max(1, Math.round(image.height * scale));
+    const context = canvas.getContext("2d");
+    context.fillStyle = "#101426";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/webp", quality);
+  }
+
+  async function prepareSharePhotos() {
+    const candidates = photos.slice(0, SHARE_PHOTO_LIMIT);
+    const prepared = [];
+    for (const photo of candidates) {
+      try {
+        const image = await compressPhotoForShare(photo.image);
+        prepared.push({
+          id: photo.id,
+          image,
+          caption: photo.caption,
+          createdAt: photo.createdAt,
+        });
+      } catch {
+        // A photo that cannot be converted should not block the private link.
+      }
+    }
+
+    while (
+      prepared.length &&
+      new TextEncoder().encode(JSON.stringify(prepared)).byteLength > SHARE_MAX_BYTES
+    ) {
+      prepared.pop();
+    }
+    return prepared;
+  }
+
+  async function copyText(value) {
+    try {
+      await navigator.clipboard.writeText(value);
+      return true;
+    } catch {
+      const temporary = document.createElement("textarea");
+      temporary.value = value;
+      temporary.style.position = "fixed";
+      temporary.style.opacity = "0";
+      document.body.append(temporary);
+      temporary.select();
+      const copied = document.execCommand("copy");
+      temporary.remove();
+      return copied;
+    }
+  }
+
+  function readSettingsForm() {
+    return {
+      myName: $("#myNameInput").value,
+      herName: $("#herNameInput").value,
+      startDate: $("#startDateInput").value || "2024-05-20",
+      nextDate: $("#nextDateInput").value || createDefaultSettings().nextDate,
+      nextTitle: $("#nextTitleInput").value.trim() || "去见你",
+      heroIntro:
+        $("#heroIntroInput").value.trim() ||
+        "星星负责浪漫，银河负责辽阔，而我负责一直、一直偏爱你。",
+      letterBody: $("#letterInput").value.trim() || createDefaultSettings().letterBody,
+    };
   }
 
   function applySettings(nextSettings) {
@@ -229,6 +411,139 @@
     }
   }
 
+  async function generatePrivateShareLink() {
+    const button = $("#generateShareLink");
+    const resultBox = $("#shareResult");
+    const output = $("#shareLinkOutput");
+    const originalLabel = button.innerHTML;
+
+    try {
+      button.disabled = true;
+      button.textContent = "正在把我们的宇宙装进链接…";
+      const nextSettings = readSettingsForm();
+      applySettings(nextSettings);
+      saveSettings();
+
+      const sharePhotos = $("#includePhotosInput").checked
+        ? await prepareSharePhotos()
+        : [];
+      const payload = {
+        v: 1,
+        createdAt: new Date().toISOString(),
+        settings: {
+          myName: settings.myName,
+          herName: settings.herName,
+          startDate: settings.startDate,
+          nextDate: settings.nextDate,
+          nextTitle: settings.nextTitle,
+          heroIntro: settings.heroIntro,
+          letterBody: settings.letterBody,
+        },
+        photos: sharePhotos,
+      };
+      const token = await encryptSharePayload(payload, accessPassword);
+      const shareUrl = new URL(location.href);
+      shareUrl.hash = `${SHARE_HASH_KEY}=${token}`;
+
+      if (shareUrl.href.length > 1800000) {
+        throw new Error("照片让链接太长了，请取消勾选照片后重试。");
+      }
+
+      output.value = shareUrl.href;
+      resultBox.hidden = false;
+      const copied = await copyText(shareUrl.href);
+      showToast(
+        copied
+          ? `专属链接已复制，包含 ${sharePhotos.length} 张照片`
+          : "专属链接已生成，请在下方手动复制",
+      );
+    } catch (error) {
+      output.value = "";
+      resultBox.hidden = true;
+      showToast(error.message || "生成专属链接失败，请稍后再试");
+    } finally {
+      button.disabled = false;
+      button.innerHTML = originalLabel;
+    }
+  }
+
+  async function initAccessGate() {
+    const form = $("#accessForm");
+    const input = $("#accessPassword");
+    const button = $("button[type='submit']", form);
+    const error = $("#gateError");
+    const gate = $("#accessGate");
+
+    input.addEventListener("input", () => {
+      input.value = input.value.replace(/\D/g, "").slice(0, 6);
+      form.classList.remove("is-wrong");
+      error.textContent = "";
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const password = input.value.trim();
+      if (password.length !== 6) {
+        form.classList.add("is-wrong");
+        error.textContent = "请输入完整的 6 位暗号。";
+        input.focus();
+        return;
+      }
+
+      button.disabled = true;
+      button.setAttribute("aria-busy", "true");
+      error.textContent = "正在确认你是不是我们的人…";
+      try {
+        const hash = await sha256Hex(`our-universe:${password}`);
+        if (hash !== ACCESS_HASH) {
+          throw new Error("暗号不对，再想想属于我们的数字。");
+        }
+
+        accessPassword = password;
+        const shareToken = getShareToken();
+        if (shareToken) {
+          let payload;
+          try {
+            payload = await decryptSharePayload(shareToken, password);
+          } catch {
+            throw new Error("这条专属链接无法解开，可能没有复制完整。");
+          }
+          if (!payload?.settings) {
+            throw new Error("这条专属链接里没有可读取的内容。");
+          }
+          activeSharePayload = payload;
+          applySettings(payload.settings);
+          saveSettings();
+          photos = Array.isArray(payload.photos) ? payload.photos : [];
+          renderGallery();
+        } else {
+          activeSharePayload = null;
+        }
+
+        $("#deletePhoto").hidden = Boolean(activeSharePayload);
+        gate.classList.add("is-unlocked");
+        gate.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("auth-locked");
+        document.body.classList.add("site-unlocked");
+        input.setAttribute("aria-invalid", "false");
+        window.dispatchEvent(new Event("resize"));
+        setTimeout(() => {
+          $(".hero-copy .button-primary")?.focus({ preventScroll: true });
+        }, 900);
+      } catch (caughtError) {
+        form.classList.remove("is-wrong");
+        void form.offsetWidth;
+        form.classList.add("is-wrong");
+        error.textContent = caughtError.message || "暗号验证失败，请再试一次。";
+        input.setAttribute("aria-invalid", "true");
+        input.select();
+      } finally {
+        button.disabled = false;
+        button.removeAttribute("aria-busy");
+      }
+    });
+  }
+
   function bindSettings() {
     $$("[data-open-settings]").forEach((button) => {
       button.addEventListener("click", openSettings);
@@ -243,17 +558,7 @@
 
     $("#settingsForm").addEventListener("submit", (event) => {
       event.preventDefault();
-      applySettings({
-        myName: $("#myNameInput").value,
-        herName: $("#herNameInput").value,
-        startDate: $("#startDateInput").value || "2024-05-20",
-        nextDate: $("#nextDateInput").value || createDefaultSettings().nextDate,
-        nextTitle: $("#nextTitleInput").value.trim() || "去见你",
-        heroIntro:
-          $("#heroIntroInput").value.trim() ||
-          "星星负责浪漫，银河负责辽阔，而我负责一直、一直偏爱你。",
-        letterBody: $("#letterInput").value.trim() || createDefaultSettings().letterBody,
-      });
+      applySettings(readSettingsForm());
       saveSettings();
       closeSettings();
       showToast("宇宙参数已更新，只属于你们");
@@ -263,6 +568,14 @@
       settings = createDefaultSettings();
       fillSettingsForm();
       showToast("已经准备好一张新的宇宙画布");
+    });
+
+    $("#generateShareLink").addEventListener("click", generatePrivateShareLink);
+    $("#copyShareLink").addEventListener("click", async () => {
+      const value = $("#shareLinkOutput").value;
+      if (!value) return;
+      const copied = await copyText(value);
+      showToast(copied ? "专属链接已再次复制" : "请长按或手动复制下方链接");
     });
   }
 
@@ -1081,18 +1394,24 @@
     bindInterface();
     bindGallery();
     bindCursor();
+    initAccessGate();
     initStarfield();
     initLoveGame();
 
     readPhotos().then((storedPhotos) => {
-      photos = storedPhotos;
-      renderGallery();
+      if (!activeSharePayload) {
+        photos = storedPhotos;
+        renderGallery();
+      }
     });
 
     const finishLoading = () => {
       setTimeout(() => {
         $("#loader").classList.add("is-hidden");
         document.body.classList.remove("is-loading");
+        if (document.body.classList.contains("auth-locked")) {
+          $("#accessPassword").focus();
+        }
       }, 650);
     };
 
